@@ -1,3 +1,14 @@
+# VSCode config files
+.vscode
+.classpath
+.project
+.settings/
+
+# IDEA config files
+*.iml
+target/
+.idea/
+
 # Compiled class file
 *.class
 

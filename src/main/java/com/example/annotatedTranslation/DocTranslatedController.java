@@ -39,7 +39,6 @@ public class DocTranslatedController {
     long translatedNumberCharacters = 0;
     @Autowired
     RestTemplate restTemplate;
-
     @Scheduled(fixedDelay = 500)
     public void startTranlation() {
         if(isWork){
