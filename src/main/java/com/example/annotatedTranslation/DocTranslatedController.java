@@ -36,12 +36,18 @@ public class DocTranslatedController {
     private static final Logger log = LoggerFactory.getLogger(DocTranslatedController.class);
     int translatedCount = 0;
     public static boolean isWork = true;
+    public static boolean isFirstTask = true;
     long translatedNumberCharacters = 0;
+    long startTime;
     @Autowired
     RestTemplate restTemplate;
     @Scheduled(fixedDelay = 500)
     public void startTranlation() {
         if(isWork){
+            if(isFirstTask){
+               startTime = System.nanoTime();
+               isFirstTask = false;
+            }
             //languageId: 3 -> English;  4 -> ru ; 5 -> Ja
             int currentLanguageId = 5;
             String url = String.format(baseUrl,currentLanguageId,0);
@@ -77,8 +83,8 @@ public class DocTranslatedController {
             }catch(Exception e)
             {
                 log.info("## translation error; the Exception is  ##" + e);
-//                long consumingTime = System.nanoTime() - startTime;
-//                System.out.println("一共花费" + consumingTime/1000000000 + "秒\n" + "一共翻译字符:" + translatedNumberCharacters);
+                long consumingTime = System.nanoTime() - startTime;
+                System.out.println("一共花费" + consumingTime/1000000000 + "秒\n" + "一共翻译字符:" + translatedNumberCharacters);
                 isWork = false;
                 throw e;
             }
