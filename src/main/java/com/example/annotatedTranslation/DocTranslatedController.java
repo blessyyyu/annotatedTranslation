@@ -16,10 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import javax.print.Doc;
-import java.io.IOException;
-import java.util.Objects;
-import java.util.Optional;
+
 
 /**
  * @author Yu Shaoqing
@@ -28,11 +25,11 @@ import java.util.Optional;
 @RestController
 @Component
 public class DocTranslatedController {
-    public String baseUrl = "http://localhost:8083/DocTranslated/findFirstByLanguageIdAndIsTranslated" +
+    public String baseUrl = "http://localhost:8080/DocTranslated/findFirstByLanguageIdAndIsTranslated" +
             "?languageId=%s" +
             "&isTranslated=%s";
     public final int YouDao_maxContentLength = 5000;
-    public final int Tencent_maxLength = 2000;
+
     private static final Logger log = LoggerFactory.getLogger(DocTranslatedController.class);
     int translatedCount = 0;
     public static boolean isWork = true;
@@ -41,11 +38,12 @@ public class DocTranslatedController {
     long startTime;
     @Autowired
     RestTemplate restTemplate;
-    @Scheduled(fixedDelay = 500)
+    @Scheduled(fixedDelay = 400)
     public void startTranlation() {
         if(isWork){
             if(isFirstTask){
                startTime = System.nanoTime();
+                System.out.println("start the time!");
                isFirstTask = false;
             }
             //languageId: 3 -> English;  4 -> ru ; 5 -> Ja
@@ -54,28 +52,32 @@ public class DocTranslatedController {
             DocEntity doc = restTemplate.getForObject(url, DocEntity.class);
             try{
                 String title = doc.getTitle();
-                String translatedTitle = GoogleTranslator.translationFromGoogle(title);
-                translatedNumberCharacters += translatedTitle.length();
+//                String translatedTitle = GoogleTranslator.translationFromGoogle(title);
+                String translatedTitle = TencentTranslationApi.queryTranslationAPI(title);
+                translatedNumberCharacters += title.length();
                 DocEntity translateDoc = new DocEntity();
                 translateDoc.setId(doc.getId());
                 translateDoc.setTitle(translatedTitle);
                 String abst = doc.getAbst();
-                String translatedAbst = GoogleTranslator.translationFromGoogle(abst);
-                translatedNumberCharacters += translatedAbst.length();
+//                String translatedAbst = GoogleTranslator.translationFromGoogle(abst);
+                String translatedAbst = TencentTranslationApi.queryTranslationAPI(abst);
+
+                translatedNumberCharacters += abst.length();
                 translateDoc.setAbst(translatedAbst);
                 String content = doc.getContent();
 
-                String translatedContent = GoogleTranslator.translationFromGoogle(content);
-                translatedNumberCharacters += translatedContent.length();
+//                String translatedContent = GoogleTranslator.translationFromGoogle(content);
+                String translatedContent = TencentTranslationApi.queryTranslationAPI(content);
+                translatedNumberCharacters += content.length();
 
                 translateDoc.setContent(translatedContent);
 //      用HTTPEntity的头文件包裹一下这个translateDoc
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 HttpEntity<DocEntity> entity = new HttpEntity<>(translateDoc,headers);
-                restTemplate.postForObject("http://localhost:8083/DocTranslated/add", entity, String.class);
+                restTemplate.postForObject("http://localhost:8080/DocTranslated/add", entity, String.class);
 
-                String setIsTranslated_url = "http://localhost:8083/DocTranslated/setIsTranslatedByIds?ids=" + translateDoc.getId() +"&isTranslated=1";
+                String setIsTranslated_url = "http://localhost:8080/DocTranslated/setIsTranslatedByIds?ids=" + translateDoc.getId() +"&isTranslated=1";
                 restTemplate.getForObject(setIsTranslated_url,String.class);
                 translatedCount+=1;
                 log.info("id = " + translateDoc.getId() + " Translate and SetIsTranslatedLabel successfully." + translatedCount +
@@ -86,7 +88,6 @@ public class DocTranslatedController {
                 long consumingTime = System.nanoTime() - startTime;
                 System.out.println("一共花费" + consumingTime/1000000000 + "秒\n" + "一共翻译字符:" + translatedNumberCharacters);
                 isWork = false;
-                throw e;
             }
         }else{
             log.info("isWork = false, please stop the program.");

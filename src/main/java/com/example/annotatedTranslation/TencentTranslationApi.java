@@ -18,7 +18,7 @@ import com.tencentcloudapi.tmt.v20180321.models.TextTranslateResponse;
  * @date 2021/7/21/17:15
  */
 public class TencentTranslationApi {
-
+    public static final int Tencent_maxLength = 2000;
 
     /**
      *
@@ -53,6 +53,8 @@ public class TencentTranslationApi {
         TmtClient client = new TmtClient(cred, "ap-beijing", clientProfile);
         // 实例化一个请求对象,每个接口都会对应一个request对象
         TextTranslateRequest req = new TextTranslateRequest();
+        if(SourceText.length() > Tencent_maxLength)
+            SourceText = SourceText.substring(0,Tencent_maxLength - 1);
         // 设置要翻译的语句
         req.setSourceText(SourceText);
         req.setSource("auto");
