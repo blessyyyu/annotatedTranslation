@@ -52,22 +52,22 @@ public class DocTranslatedController {
             DocEntity doc = restTemplate.getForObject(url, DocEntity.class);
             try{
                 String title = doc.getTitle();
-//                String translatedTitle = GoogleTranslator.translationFromGoogle(title);
-                String translatedTitle = TencentTranslationApi.queryTranslationAPI(title);
+                String translatedTitle = GoogleTranslator.translationFromGoogle(title);
+//                String translatedTitle = TencentTranslationApi.queryTranslationAPI(title);
                 translatedNumberCharacters += title.length();
                 DocEntity translateDoc = new DocEntity();
                 translateDoc.setId(doc.getId());
                 translateDoc.setTitle(translatedTitle);
                 String abst = doc.getAbst();
-//                String translatedAbst = GoogleTranslator.translationFromGoogle(abst);
-                String translatedAbst = TencentTranslationApi.queryTranslationAPI(abst);
+                String translatedAbst = GoogleTranslator.translationFromGoogle(abst);
+//                String translatedAbst = TencentTranslationApi.queryTranslationAPI(abst);
 
                 translatedNumberCharacters += abst.length();
                 translateDoc.setAbst(translatedAbst);
                 String content = doc.getContent();
 
-//                String translatedContent = GoogleTranslator.translationFromGoogle(content);
-                String translatedContent = TencentTranslationApi.queryTranslationAPI(content);
+                String translatedContent = GoogleTranslator.translationFromGoogle(content);
+//                String translatedContent = TencentTranslationApi.queryTranslationAPI(content);
                 translatedNumberCharacters += content.length();
 
                 translateDoc.setContent(translatedContent);
