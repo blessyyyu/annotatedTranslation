@@ -26,11 +26,6 @@ import java.util.*;
 @EnableScheduling
 public class AnnotatedTranslationApplication {
 
-	public String baseUrl = "http://localhost:8080/DocTranslated/findFirstByLanguageIdAndIsTranslated" +
-			"?languageId=%s" +
-			"&isTranslated=%s";
-
-
 	public static void main(String[] args) {
 		SpringApplication.run(AnnotatedTranslationApplication.class, args);
 	}

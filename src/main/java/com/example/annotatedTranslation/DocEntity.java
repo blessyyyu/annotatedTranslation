@@ -8,17 +8,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DocEntity {
-    private int id;
+    private int docId;
     private String title;
     private String abst;
     private String content;
 
-    public int getId() {
-        return id;
+    public int getDocId() {
+        return docId;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setDocId(int docId) {
+        this.docId = docId;
     }
 
     public String getTitle() {
@@ -47,8 +47,8 @@ public class DocEntity {
 
     @Override
     public String toString() {
-        return "Doc{" +
-                "id=" + id +
+        return "DocEntity{" +
+                "docId=" + docId +
                 ", title='" + title + '\'' +
                 ", abst='" + abst + '\'' +
                 ", content='" + content + '\'' +

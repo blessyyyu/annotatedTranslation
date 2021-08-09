@@ -35,7 +35,7 @@ class DocTranslatedControllerTest {
         String url = "http://localhost:8080/DocTranslated/setDocTranslated";
 
         DocEntity doc = new DocEntity();
-        doc.setId(1);
+        doc.setDocId(1);
         doc.setTitle("测试");
 
 
@@ -48,11 +48,11 @@ class DocTranslatedControllerTest {
         restTemplate.postForObject("http://localhost:8080/docState/setOneInDocState",null,String.class);
 
         String setIsTranslated_url = "http://localhost:8080/DocTranslated/setIsTranslated?id={1}";
-        ResponseEntity<String> response2 = restTemplate.getForEntity(setIsTranslated_url,String.class,doc.getId());
+        ResponseEntity<String> response2 = restTemplate.getForEntity(setIsTranslated_url,String.class,doc.getDocId());
 
         assertEquals(response2.getBody(),"Set IsTranslated successfully.");
 
-        String delete_url = "http://localhost:8080/DocTranslated/delete?id=" + doc.getId();
+        String delete_url = "http://localhost:8080/DocTranslated/delete?id=" + doc.getDocId();
         restTemplate.delete(delete_url);
     }
 
