@@ -1,10 +1,12 @@
-package com.swjtu.util;
+package com.example.annotatedTranslation;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 import java.io.*;
-import java.net.URLEncoder;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -13,19 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 public class Util {
-    public static List<NameValuePair> map2list(Map<String, String> mapParams) {
-        List<NameValuePair> listParams = new ArrayList<NameValuePair>();
-        Iterator it = mapParams.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry entry = (Map.Entry)it.next();
-            String key = String.valueOf(entry.getKey());
-            String value = String.valueOf(entry.getValue());
-            if (value != null) {
-                listParams.add(new BasicNameValuePair(key, value));
-            }
-        }
-        return listParams;
-    }
 
     public static String getUrlWithQueryString(String url, Map<String, String> params) {
         if (params == null) {
@@ -133,5 +122,59 @@ public class Util {
             resultCharArray[index++] = hexDigits[b & 0xf];
         }
         return new String(resultCharArray);
+    }
+
+
+    public static String getResponse( String url)throws URISyntaxException, IOException, InterruptedException{
+        URL url_x = new URL(url);
+        HttpURLConnection conn = (HttpURLConnection) url_x.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setUseCaches(false);
+        conn.setConnectTimeout(5000); // 请求超时5秒
+        // 设置HTTP头:
+        conn.setRequestProperty("Accept", "*/*");
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36");
+        // 连接并发送HTTP请求:
+        conn.connect();
+        // 判断HTTP响应是否200:
+        if (conn.getResponseCode() != 200) {
+            throw new RuntimeException("bad response");
+        }
+
+        // 获取响应内容:
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            InputStream input = conn.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            reader.close();
+            input.close();
+        }catch (Exception e){
+            throw e;
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
+     *
+     * @param url 需要设置的代理ip
+     * @param port 需要设置的代理的port
+     * @return
+     */
+    public static SimpleClientHttpRequestFactory getFactory(String url, int port) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        //单位为ms
+        factory.setReadTimeout(10 * 1000);
+        //单位为ms
+        factory.setConnectTimeout(30 * 1000);
+        // 代理的url网址或ip, port端口
+        InetSocketAddress address = new InetSocketAddress(url, port);
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, address);
+        factory.setProxy(proxy);
+        return factory;
     }
 }

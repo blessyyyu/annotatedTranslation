@@ -1,4 +1,4 @@
-package com.swjtu.lang;
+package com.example.annotatedTranslation;
 
 public enum LANG {
     AUTO,           // 自动检测语种

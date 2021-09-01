@@ -25,23 +25,22 @@ import java.util.*;
 @SpringBootApplication
 @EnableScheduling
 public class AnnotatedTranslationApplication {
+	public static Map<String, Integer> Ipmap = new HashMap<>();
+	public static boolean [] ValidFlag;
 
 	public static void main(String[] args) {
+		ZhimaAPI zhimaAPI = new ZhimaAPI();
+		Ipmap = zhimaAPI.parseZhimaApi(zhimaAPI.getZhimaIp());
+		ValidFlag = new boolean[Ipmap.size()];
+		Arrays.fill(ValidFlag,true);
 		SpringApplication.run(AnnotatedTranslationApplication.class, args);
 	}
 
 	@Bean
-	public RestTemplate restTemplate(RestTemplateBuilder builder){
+	public static RestTemplate restTemplate(RestTemplateBuilder builder){
 		return builder.build();
 	}
 
-
-	public Map<String,Integer> setHttpParams(int languageId,int isTranslated){
-		Map<String, Integer> params = new HashMap<>();
-		params.put("languageId",languageId);
-		params.put("isTranslated",isTranslated);
-		return params;
-	}
 
 
 }

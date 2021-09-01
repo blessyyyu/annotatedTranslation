@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author Yu Shaoqing
@@ -30,93 +31,87 @@ import java.util.Date;
 @RestController
 @Component
 public class DocTranslatedController {
-//    public String baseUrl = "http://localhost:8080/DocTranslated/findFirstByLanguageIdAndIsTranslated" +
-//            "?languageId=%s" +
-//            "&isTranslated=%s";
-    public String baseUrl = "http://47.104.172.146:8083/DocTranslated/findFirstByLanguageIdAndIsTranslated" +
+
+    public String baseUrl = "http://localhost:8083/DocTranslated/findFirstByLanguageIdAndIsTranslated" +
             "?languageId=%s" +
             "&isTranslated=%s";
-    public final int YouDao_maxContentLength = 5000;
+    public String countNumUrl = "http://localhost:8083/DocTranslated/count?languageId=%s&isTranslated=0";
+
+    int remainCount;
 
     private static final Logger log = LoggerFactory.getLogger(DocTranslatedController.class);
     int translatedCount = 0;
     public static boolean isWork = true;
     public static boolean isFirstTask = true;
-    long translatedNumberCharacters = 0;
     long startTime;
     @Autowired
-    RestTemplate restTemplate;
+    RestTemplate rest_Template;
     @Scheduled(fixedDelay = 1000)
-    public void startTranlation() throws IOException {
+    public void startTranlation() {
         if(isWork){
             if(isFirstTask){
-               startTime = System.nanoTime();
+//                rest_Template.setRequestFactory(Util.getFactory());
+                startTime = System.nanoTime();
                 Date day=new Date();
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-               log.info(df.format(day) + " start Translation! ");
-               isFirstTask = false;
+                log.info(df.format(day) + " start Translation! ");
+                isFirstTask = false;
             }
             //languageId: 3 -> English;  4 -> ru ; 5 -> Ja
             int currentLanguageId = 4;
             String url = String.format(baseUrl,currentLanguageId,0);
-            DocEntity doc = restTemplate.getForObject(url, DocEntity.class);
+            String counturl = String.format(countNumUrl,currentLanguageId);
+            DocEntity doc = rest_Template.getForObject(url, DocEntity.class);
             try{
                 String title = doc.getTitle();
-                String translatedTitle = GoogleTranslator.translationFromGoogle(title);
-//                String translatedTitle = TencentTranslationApi.queryTranslationAPI(title);
-                translatedNumberCharacters += title.length();
+                String translatedTitle = GoogleTranslator.TranslateSingle(title);
+
                 DocEntity translateDoc = new DocEntity();
                 translateDoc.setDocId(doc.getDocId());
                 translateDoc.setTitle(translatedTitle);
                 String abst = doc.getAbst();
-                String translatedAbst = GoogleTranslator.translationFromGoogle(abst);
-//                String translatedAbst = TencentTranslationApi.queryTranslationAPI(abst);
+                String translatedAbst = GoogleTranslator.TranslateSingle(abst);
 
-                translatedNumberCharacters += abst.length();
+
                 translateDoc.setAbst(translatedAbst);
                 String content = doc.getContent();
 
-                String translatedContent = GoogleTranslator.translationFromGoogle(content);
-//                String translatedContent = TencentTranslationApi.queryTranslationAPI(content);
-                translatedNumberCharacters += content.length();
+                String translatedContent = GoogleTranslator.TranslateSingle(content);
+
 
                 translateDoc.setContent(translatedContent);
-//      用HTTPEntity的头文件包裹一下这个translateDoc
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<DocEntity> entity = new HttpEntity<>(translateDoc,headers);
-                restTemplate.postForObject("http://47.104.172.146:8083/DocTranslated/add", entity, String.class);
 
-//                String setIsTranslated_url = "http://localhost:8080/DocTranslated/setIsTranslatedByIds?ids=" + translateDoc.getId() +"&isTranslated=1";
-//                restTemplate.getForObject(setIsTranslated_url,String.class);
-                translatedCount+=1;
-                log.info("docId = " + translateDoc.getDocId() + " Translate and SetIsTranslatedLabel successfully." + translatedCount +
-                        " docs have been translated");
+                if(translatedTitle.length() != 0 ){
+                    //      用HTTPEntity的头文件包裹一下这个translateDoc
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+                    HttpEntity<DocEntity> entity = new HttpEntity<>(translateDoc,headers);
+                    rest_Template.postForObject("http://localhost:8083/DocTranslated/add", entity, String.class);
+                    translatedCount+=1;
+                    remainCount = rest_Template.getForObject(counturl,Integer.class);
+                    log.info("docId = " + translateDoc.getDocId() + " Translate and SetIsTranslatedLabel successfully." + translatedCount +
+                            " docs have been translated\n" + "remain:" + remainCount  + "docs");
+                }
             }catch(Exception e)
             {
-                log.info("## translation error; the Exception is  ##" + e);
+                e.printStackTrace();
                 long consumingTime = System.nanoTime() - startTime;
-                File writeMessage = new File(".\\Count_and_Time.txt");
-                if(!writeMessage.exists()){
-                    writeMessage.createNewFile();
-                }
-
-                BufferedWriter out = new BufferedWriter(new FileWriter(writeMessage, true));
                 Date day=new Date();
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                out.write("\n" + df.format(day) + "\t 一共花费" + consumingTime/1000000000 + "秒\t" + "一共翻译字符:" + translatedNumberCharacters);
-                out.close();
-                log.info(df.format(day) + "一共花费" + consumingTime/1000000000 + "秒\n" + "一共翻译字符:" + translatedNumberCharacters);
+                log.info(df.format(day) + "一共花费" + consumingTime/1000000000 + "秒\n");
                 isWork = false;
             }
         }else{
-            log.info("isWork = false, please stop the program.");
+            if(remainCount != 0){
+
+//                rest_Template.setRequestFactory(Util.getFactory());
+            }else{
+                log.info(" remainCount = 0, please stop the program!");
+            }
+
         }
 
     }
-
-
 
 }
