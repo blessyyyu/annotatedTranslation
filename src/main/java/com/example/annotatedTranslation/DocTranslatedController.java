@@ -22,7 +22,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * @author Yu Shaoqing
@@ -38,24 +40,26 @@ public class DocTranslatedController {
     public String countNumUrl = "http://localhost:8083/DocTranslated/count?languageId=%s&isTranslated=0";
 
     int remainCount;
-
+    public static Map<String, Integer> Ipmap = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(DocTranslatedController.class);
     int translatedCount = 0;
     public static boolean isWork = true;
     public static boolean isFirstTask = true;
     long startTime;
+    String [] keys;
+
+    String curIp;
+    int curPort;
+
     @Autowired
     RestTemplate rest_Template;
     @Scheduled(fixedDelay = 1000)
     public void startTranlation() {
         if(isWork){
             if(isFirstTask){
-//                rest_Template.setRequestFactory(Util.getFactory());
-                startTime = System.nanoTime();
-                Date day=new Date();
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                log.info(df.format(day) + " start Translation! ");
+//              从Ipmap里随机获得一个ip和port
+                getRandomIp();
+                log.info("start Translation! ");
                 isFirstTask = false;
             }
             //languageId: 3 -> English;  4 -> ru ; 5 -> Ja
@@ -65,19 +69,20 @@ public class DocTranslatedController {
             DocEntity doc = rest_Template.getForObject(url, DocEntity.class);
             try{
                 String title = doc.getTitle();
-                String translatedTitle = GoogleTranslator.TranslateSingle(title);
+                String translatedTitle = ProxyTranslator.googleTransWithProxy(curIp,curPort,title);
 
                 DocEntity translateDoc = new DocEntity();
                 translateDoc.setDocId(doc.getDocId());
                 translateDoc.setTitle(translatedTitle);
                 String abst = doc.getAbst();
-                String translatedAbst = GoogleTranslator.TranslateSingle(abst);
+                getRandomIp();
+                String translatedAbst = ProxyTranslator.googleTransWithProxy(curIp,curPort,abst);
 
 
                 translateDoc.setAbst(translatedAbst);
                 String content = doc.getContent();
 
-                String translatedContent = GoogleTranslator.TranslateSingle(content);
+                String translatedContent = ProxyTranslator.googleTransWithProxy(curIp,curPort,content);
 
 
                 translateDoc.setContent(translatedContent);
@@ -95,23 +100,39 @@ public class DocTranslatedController {
                 }
             }catch(Exception e)
             {
-                e.printStackTrace();
-                long consumingTime = System.nanoTime() - startTime;
-                Date day=new Date();
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                log.info(df.format(day) + "一共花费" + consumingTime/1000000000 + "秒\n");
+                log.info("the current ip:port" + curIp + ":" + curPort +
+                        "\nplease change the Proxy and delete the unvalid ip in the map");
+                Ipmap.remove(curIp);
+                if(Ipmap.size() == 0){
+                    ZhimaAPI zhimaAPI = new ZhimaAPI();
+                    Ipmap = zhimaAPI.parseZhimaApi(zhimaAPI.getZhimaIp());
+                }
                 isWork = false;
+                e.printStackTrace();
             }
         }else{
             if(remainCount != 0){
-
-//                rest_Template.setRequestFactory(Util.getFactory());
+                isWork = true;
+                // 切换proxy
+                getRandomIp();
             }else{
                 log.info(" remainCount = 0, please stop the program!");
+                AnnotatedTranslationApplication.context.close();
             }
 
         }
 
     }
+
+    void getRandomIp(){
+        // 从Ipmap里随机获得一个ip和port
+        keys = Ipmap.keySet().toArray(new String[0]);
+        Random random = new Random();
+        String randomIp = keys[random.nextInt(keys.length)];
+        int randomPort = Ipmap.get(randomIp);
+        curIp = randomIp;
+        curPort = randomPort;
+    }
+
 
 }

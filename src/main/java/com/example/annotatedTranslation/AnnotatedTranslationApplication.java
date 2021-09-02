@@ -14,6 +14,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
@@ -25,15 +26,13 @@ import java.util.*;
 @SpringBootApplication
 @EnableScheduling
 public class AnnotatedTranslationApplication {
-	public static Map<String, Integer> Ipmap = new HashMap<>();
-	public static boolean [] ValidFlag;
+	public static ConfigurableApplicationContext context;
 
 	public static void main(String[] args) {
+		// 初始化Ipmap
 		ZhimaAPI zhimaAPI = new ZhimaAPI();
-		Ipmap = zhimaAPI.parseZhimaApi(zhimaAPI.getZhimaIp());
-		ValidFlag = new boolean[Ipmap.size()];
-		Arrays.fill(ValidFlag,true);
-		SpringApplication.run(AnnotatedTranslationApplication.class, args);
+		DocTranslatedController.Ipmap = zhimaAPI.parseZhimaApi(zhimaAPI.getZhimaIp());
+		context = SpringApplication.run(AnnotatedTranslationApplication.class, args);
 	}
 
 	@Bean
