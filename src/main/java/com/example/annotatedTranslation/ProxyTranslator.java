@@ -1,5 +1,6 @@
 package com.example.annotatedTranslation;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,7 +21,9 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -28,31 +31,48 @@ import org.apache.http.util.EntityUtils;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 public class ProxyTranslator {
-	// 代理服务器
-	static String proxyHost;
-	static Integer proxyPort;
 
 	private static HttpHost proxy = null;
 
 	private static RequestConfig reqConfig = null;
+	private static SocketConfig socketConfig = null;
 
-	public static void main(String[] args) {
-		System.out.println(doGoogleTranslateSingle("Tom Kershaw is a sports writer at The Independent, focusing primarily on football. He also led coverage of the Open Championship in Portrush and has reported from Wimbledon. He was a silver medallist in the young sports writer category at the 2019 and 2020 Sports Journalism Awards. "));
+	public static void main(String[] args) throws Exception {
+		int OneIpTransCount = 0;
+		while(true){
+			System.out.println(googleTransWithProxy("113.243.32.19",4243,"Tom Kershaw is a sports writer at The Independent, focusing primarily on football. He also led coverage of the Open Championship in Portrush and has reported from Wimbledon. He was a silver medallist in the young sports writer category at the 2019 and 2020 Sports Journalism Awards. "));
+			OneIpTransCount += 1;
+			System.out.println("the count = " + OneIpTransCount);
+				Thread.sleep(300);
+		}
+
 	}
 
-	public static String googleTransWithProxy(String ip, int port, String text){
+	public static String googleTransWithProxy(String ip, int port, String text) throws Exception {
 		proxy = new HttpHost(ip, port, "http");
-		reqConfig = RequestConfig.custom().setConnectionRequestTimeout(5000).setConnectTimeout(10000) // 设置连接超时时间
-				.setSocketTimeout(10000) // 设置读取超时时间
+		socketConfig = SocketConfig.custom()
+				.setSoKeepAlive(false)
+				.setSoLinger(1)
+				.setSoReuseAddress(true)
+				.setSoTimeout(10000)
+				.setTcpNoDelay(true).build();
+
+
+		reqConfig = RequestConfig.custom().setConnectionRequestTimeout(5000).setConnectTimeout(5000) // 设置连接超时时间
+				.setSocketTimeout(5000) // 设置读取超时时间
 				.setExpectContinueEnabled(false).setProxy(new HttpHost(ip, port))
 				.setCircularRedirectsAllowed(true) // 允许多次重定向
 				.build();
+		if(text.length() > 1000){
+			text = text.substring(0,999);
+		}
 		return doGoogleTranslateSingle(text);
 	}
 
-	public static String doGoogleTranslateSingle(String text) {
+	public static String doGoogleTranslateSingle(String text) throws Exception {
 		// 目标地址
 		String targetUrl = "https://translate.googleapis.com/translate_a/single";
 
@@ -77,8 +97,7 @@ public class ProxyTranslator {
 			String result = doRequest(httpGet);
 			return parses(result);
 		} catch (Exception e) {
-			e.printStackTrace();
-			return "bad response";
+			throw e;
 		}
 
 	}
@@ -101,14 +120,19 @@ public class ProxyTranslator {
 	 * @param httpReq
 	 * @return
 	 */
-	public static String doRequest(HttpRequestBase httpReq) {
+	public static String doRequest(HttpRequestBase httpReq) throws IOException {
 		String result = new String();
 		httpReq.setConfig(reqConfig);
+
 		try {
 			// 设置请求头
 			setHeaders(httpReq);
 			
-			CloseableHttpClient httpClient = HttpClients.createDefault();
+//			CloseableHttpClient httpClient = HttpClients.createDefault();
+
+			CloseableHttpClient httpClient = HttpClientBuilder.create()
+					.setDefaultSocketConfig(socketConfig).build();
+
 			// 执行请求
 			CloseableHttpResponse httpResp = httpClient.execute(httpReq);
 			
@@ -128,7 +152,7 @@ public class ProxyTranslator {
 			httpReq.abort();
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
+			throw e;
 		}
 		return result;
 	}
@@ -149,9 +173,9 @@ public class ProxyTranslator {
 		return nvps;
 	}
 
-	private static String token(String text) {
+	private static String token(String text) throws Exception{
 		String tk = "";
-		ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
+		ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
 		try {
 			FileReader reader = new FileReader("./tk/Google.js");
 			engine.eval(reader);
@@ -162,6 +186,7 @@ public class ProxyTranslator {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw e;
 		}
 		return tk;
 	}

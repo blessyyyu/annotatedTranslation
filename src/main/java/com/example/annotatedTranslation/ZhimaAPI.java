@@ -12,7 +12,9 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -29,14 +31,22 @@ import java.util.Map;
  */
 public class ZhimaAPI {
     static private Map<String,String> GetIpParams = new HashMap<>();
-    private static RequestConfig reqConfig = null;
+    private static RequestConfig reqConfig2 = null;
+    private static SocketConfig socketConfig2 = null;
     String targetUrl = "http://webapi.http.zhimacangku.com/getip";
 
     public String getZhimaIp() {
-        reqConfig = RequestConfig.custom().setConnectionRequestTimeout(5000).setConnectTimeout(10000) // 设置连接超时时间
+        reqConfig2 = RequestConfig.custom().setConnectionRequestTimeout(5000).setConnectTimeout(10000) // 设置连接超时时间
                 .setSocketTimeout(10000) // 设置读取超时时间
                 .setCircularRedirectsAllowed(true) // 允许多次重定向
                 .build();
+
+        socketConfig2 = SocketConfig.custom()
+                .setSoKeepAlive(false)
+                .setSoLinger(1)
+                .setSoReuseAddress(true)
+                .setSoTimeout(10000)
+                .setTcpNoDelay(true).build();
         setIpParams();
         try {
             String paramStr = EntityUtils.toString(new UrlEncodedFormEntity(paramsAdapter(GetIpParams), "UTF-8"));
@@ -52,7 +62,7 @@ public class ZhimaAPI {
 
     public void setIpParams() {
 //      num: 提取数量
-        GetIpParams.put("num", "20");
+        GetIpParams.put("num", "5");
 //      type: 1 TXT, 2: json 3: html
         GetIpParams.put("type", "2");
 //        city 0 默认全国
@@ -62,7 +72,7 @@ public class ZhimaAPI {
 //        port: 端口号
         GetIpParams.put("port", "1");
 //        pack: 套餐
-        GetIpParams.put("pack", "176722");
+//        GetIpParams.put("pack", "176722");
 //        ts: 是否现实ip过期时间， 1： 显示， 2： 不显示
         GetIpParams.put("ts", "1");
 //        ys: 是否显示运营商
@@ -77,6 +87,8 @@ public class ZhimaAPI {
         GetIpParams.put("pb", "4");
 //        mr: 去重选择 1： 360天去重
         GetIpParams.put("mr", "1");
+        GetIpParams.put("regions", "");
+        GetIpParams.put("pro", "");
 
 
 
@@ -119,12 +131,18 @@ public class ZhimaAPI {
      */
     public String doRequest(HttpRequestBase httpReq) {
         String result = new String();
-        httpReq.setConfig(reqConfig);
+        httpReq.setConfig(reqConfig2);
         try {
             // 设置请求头
             setHeaders(httpReq);
 
-            CloseableHttpClient httpClient = HttpClients.createDefault();
+//            CloseableHttpClient httpClient = HttpClients.createDefault();
+
+
+            CloseableHttpClient httpClient = HttpClientBuilder.create()
+                    .setDefaultSocketConfig(socketConfig2).build();
+
+
             // 执行请求
             CloseableHttpResponse httpResp = httpClient.execute(httpReq);
 
@@ -146,6 +164,7 @@ public class ZhimaAPI {
             e.printStackTrace();
             return null;
         }
+        System.out.println("Request for new Proxies...");
         return result;
     }
 

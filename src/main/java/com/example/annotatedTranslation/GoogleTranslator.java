@@ -2,10 +2,7 @@ package com.example.annotatedTranslation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.util.EntityUtils;
 
@@ -110,9 +107,16 @@ public final class GoogleTranslator  {
 
     public static void main(String[] args) throws Exception {
         setLangSupport();
-        String q = "Tom Kershaw is a sports writer at The Independent, focusing primarily on football. He also led coverage of the Open Championship in Portrush and has reported from Wimbledon. He was a silver medallist in the young sports writer category at the 2019 and 2020 Sports Journalism Awards. ";
-        setFormData(LANG.AUTO,LANG.ZH,q);
-        String result = parses(query(url));
-        System.out.println(result);
+        int OneIpTransCount = 0;
+        while(true){
+            String q = "Tom Kershaw is a sports writer at The Independent, focusing primarily on football. He also led coverage of the Open Championship in Portrush and has reported from Wimbledon. He was a silver medallist in the young sports writer category at the 2019 and 2020 Sports Journalism Awards. ";
+            setFormData(LANG.AUTO,LANG.ZH,q);
+            String result = parses(query(url));
+            System.out.println(result);
+            OneIpTransCount += 1;
+            System.out.println("the count =" + OneIpTransCount);
+            Thread.sleep(1000);
+        }
+
     }
 }
