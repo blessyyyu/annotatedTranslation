@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -15,11 +14,9 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,9 +59,11 @@ public class ZhimaAPI {
 
     public void setIpParams() {
 //      num: 提取数量
-        GetIpParams.put("num", "5");
+        GetIpParams.put("num", "20");
 //      type: 1 TXT, 2: json 3: html
         GetIpParams.put("type", "2");
+        // 省份，默认全国
+        GetIpParams.put("pro", "");
 //        city 0 默认全国
         GetIpParams.put("city", "0");
 //        yys： 运营商 0 不限
@@ -72,13 +71,13 @@ public class ZhimaAPI {
 //        port: 端口号
         GetIpParams.put("port", "1");
 //        pack: 套餐
-//        GetIpParams.put("pack", "176722");
+        GetIpParams.put("pack", "176722");
 //        ts: 是否现实ip过期时间， 1： 显示， 2： 不显示
         GetIpParams.put("ts", "1");
 //        ys: 是否显示运营商
         GetIpParams.put("ys", "0");
 //        cs: 是否显示位置
-        GetIpParams.put("cs", "1");
+        GetIpParams.put("cs", "0");
 //        lb: 分隔符
         GetIpParams.put("lb", "1");
 //        sb: 自定义分隔符
@@ -88,7 +87,7 @@ public class ZhimaAPI {
 //        mr: 去重选择 1： 360天去重
         GetIpParams.put("mr", "1");
         GetIpParams.put("regions", "");
-        GetIpParams.put("pro", "");
+
 
 
 
