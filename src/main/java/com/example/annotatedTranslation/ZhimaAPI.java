@@ -68,7 +68,7 @@ public class ZhimaAPI {
         GetIpParams.put("city", "0");
 //        yys： 运营商 0 不限
         GetIpParams.put("yys", "0");
-//        port: 端口号
+//        port: 端口协议， 1：http, 11:https  2: sock5
         GetIpParams.put("port", "1");
 //        pack: 套餐
         GetIpParams.put("pack", "176722");
@@ -149,7 +149,6 @@ public class ZhimaAPI {
 
             // 获取http code
             int statusCode = httpResp.getStatusLine().getStatusCode();
-            System.out.println(statusCode);
 
             HttpEntity entity = httpResp.getEntity();
             if (entity != null) {
